@@ -14,8 +14,11 @@
     "deploy": "next build && next export"
   },
   "dependencies": {
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
     "@headlessui/react": "2.2.4",
     "@heroicons/react": "2.2.0",
+    "@mui/material": "^5.15.0",
     "@pod-protocol/sdk": "1.4.5",
     "@reduxjs/toolkit": "2.8.2",
     "@solana/wallet-adapter-base": "0.9.27",

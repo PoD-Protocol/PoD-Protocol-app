@@ -26,12 +26,12 @@ export const LazyCreateChannelModal = createLazyComponent(
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
     <div className="bg-gray-900/95 backdrop-blur-sm rounded-xl p-6 border border-purple-500/20 max-w-md w-full mx-4">
       <div className="space-y-4">
-        <div className="h-6 bg-gray-700/50 rounded-md animate-pulse"></div>
-        <div className="space-y-3">          <div className="h-10 bg-gray-700/50 rounded-md animate-pulse"></div>
-          <div className="h-20 bg-gray-700/50 rounded-md animate-pulse"></div>
+        <div className="h-6 bg-gray-700/50 rounded animate-pulse"></div>
+        <div className="space-y-3">          <div className="h-10 bg-gray-700/50 rounded animate-pulse"></div>
+          <div className="h-20 bg-gray-700/50 rounded animate-pulse"></div>
         </div>
-        <div className="flex justify-end space-x-3">          <div className="h-10 w-20 bg-gray-700/50 rounded-md animate-pulse"></div>
-          <div className="h-10 w-32 bg-purple-600/50 rounded-md animate-pulse"></div>
+        <div className="flex justify-end space-x-3">          <div className="h-10 w-20 bg-gray-700/50 rounded animate-pulse"></div>
+          <div className="h-10 w-32 bg-purple-600/50 rounded animate-pulse"></div>
         </div>
       </div>
     </div>
@@ -62,8 +62,8 @@ export const LazyChatInterface = createLazyComponent(
     <div className="flex-1 p-4 space-y-4">
       {Array.from({ length: 5 }).map((_, i) => (
         <div key={i} className={`flex ${i % 2 === 0 ? 'justify-start' : 'justify-end'}`}>          <div className="max-w-xs p-3 rounded-lg bg-gray-700/50 animate-pulse">
-            <div className="h-4 bg-gray-600/50 rounded-md mb-1"></div>
-            <div className="h-3 bg-gray-600/50 rounded-md w-3/4"></div>
+            <div className="h-4 bg-gray-600/50 rounded mb-1"></div>
+            <div className="h-3 bg-gray-600/50 rounded w-3/4"></div>
           </div>
         </div>
       ))}
@@ -109,8 +109,8 @@ export const LazyMarkdownEditor = createLazyComponent(
 export const LazyFileUploader = createLazyComponent(
   () => import('../upload/FileUploader'),
   <div className="w-full h-32 bg-gray-900/50 border-2 border-dashed border-purple-500/20 rounded-lg flex items-center justify-center">
-    <div className="text-center">      <div className="h-8 w-8 bg-purple-500/20 rounded-md mx-auto mb-2 animate-pulse"></div>
-      <div className="h-4 w-24 bg-gray-700/50 rounded-md mx-auto animate-pulse"></div>
+    <div className="text-center">      <div className="h-8 w-8 bg-purple-500/20 rounded mx-auto mb-2 animate-pulse"></div>
+      <div className="h-4 w-24 bg-gray-700/50 rounded mx-auto animate-pulse"></div>
     </div>
   </div>
 );

@@ -346,7 +346,7 @@ const ChannelsPage = () => {
                   <input
                     type="checkbox"
                     id="private"
-                    className="rounded-md border-purple-500/20 bg-gray-800/50 text-purple-600 focus:ring-purple-500/50"
+                    className="rounded border-purple-500/20 bg-gray-800/50 text-purple-600 focus:ring-purple-500/50"
                   />
                   <label htmlFor="private" className="text-sm text-gray-300">
                     Make this channel private
