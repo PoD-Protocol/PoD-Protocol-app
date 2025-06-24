@@ -124,11 +124,40 @@ const nextConfig = {
       buffer: require.resolve("buffer"),
     };
 
-    // Add buffer polyfill
+    // Client-side optimizations and polyfills
     if (!isServer) {
+      const webpack = require('webpack');
+      
+      // Exclude problematic native modules from client bundle
+      config.externals = [
+        ...(config.externals || []),
+        // IPFS/Helia native dependencies
+        'node-datachannel',
+        '@chainsafe/libp2p-noise',
+        '@chainsafe/is-ip',
+        'better-sqlite3',
+        'sqlite3',
+        'leveldown',
+        'node-gyp-build',
+        // Other native modules that may cause issues
+        'sharp',
+        'canvas',
+        'fsevents',
+      ];
+
+      // Configure webpack plugins
       config.plugins = config.plugins || [];
+      
+      // Ignore native modules
       config.plugins.push(
-        new (require('webpack')).ProvidePlugin({
+        new webpack.IgnorePlugin({
+          resourceRegExp: /^(node-datachannel|better-sqlite3|sqlite3|leveldown|node-gyp-build)$/,
+        })
+      );
+      
+      // Add buffer polyfill
+      config.plugins.push(
+        new webpack.ProvidePlugin({
           Buffer: ['buffer', 'Buffer'],
         })
       );

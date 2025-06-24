@@ -37,6 +37,13 @@ export default function usePodClient() {
       };
     }
 
+    // Disable IPFS in browser environments to avoid native module issues
+    if (typeof window !== 'undefined') {
+      config.ipfs = {
+        disabled: true
+      };
+    }
+
     return new PodComClient(config);
   }, []);
 
