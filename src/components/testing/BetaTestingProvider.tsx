@@ -4,9 +4,22 @@ import { createContext, useContext, useEffect, ReactNode } from 'react';
 import { getAnalytics, trackFeatureUsage, trackUserFeedback } from '../../lib/analytics';
 import FeedbackWidget from '../feedback/FeedbackWidget';
 
+// Type definitions for analytics and feedback
+type FeatureMetadata = Record<string, string | number | boolean>;
+
+interface FeedbackData {
+  type: 'bug' | 'feature' | 'general' | 'rating';
+  rating?: number;
+  message: string;
+  userAgent: string;
+  url: string;
+  timestamp: number;
+  userId?: string;
+}
+
 interface BetaTestingContextType {
-  trackFeature: (feature: string, action: string, metadata?: Record<string, any>) => void;
-  submitFeedback: (feedback: any) => Promise<void>;
+  trackFeature: (feature: string, action: string, metadata?: FeatureMetadata) => void;
+  submitFeedback: (feedback: FeedbackData) => Promise<void>;
   isAnalyticsEnabled: boolean;
 }
 
@@ -40,15 +53,15 @@ export const BetaTestingProvider: React.FC<BetaTestingProviderProps> = ({
     }
   }, [userId, isAnalyticsEnabled]);
 
-  const trackFeature = (feature: string, action: string, metadata?: Record<string, any>) => {
+  const trackFeature = (feature: string, action: string, metadata?: FeatureMetadata) => {
     if (isAnalyticsEnabled) {
       trackFeatureUsage(feature, action, metadata);
     }
   };
 
-  const submitFeedback = async (feedback: any) => {
+  const submitFeedback = async (feedback: FeedbackData) => {
     if (isAnalyticsEnabled) {
-      trackUserFeedback(feedback);
+      trackUserFeedback(feedback as unknown as Record<string, unknown>);
     }
     
     // Also send directly to feedback API

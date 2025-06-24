@@ -6,6 +6,11 @@ import { PodComClient, PodComConfig } from '@pod-protocol/sdk';
 import { PublicKey } from '@solana/web3.js';
 import toast from 'react-hot-toast';
 
+// Extended client interface for secure cleanup functionality
+interface ExtendedPodComClient extends PodComClient {
+  secureCleanup?: () => void;
+}
+
 export default function usePodClient() {
   const wallet = useAnchorWallet();
   const [isInitialized, setIsInitialized] = useState(false);
@@ -74,9 +79,9 @@ export default function usePodClient() {
     return () => {
       mounted = false;
       // Cleanup client on unmount
-      if (client && typeof (client as any).secureCleanup === 'function') {
+      if (client && typeof (client as ExtendedPodComClient).secureCleanup === 'function') {
         try {
-          (client as any).secureCleanup();
+          (client as ExtendedPodComClient).secureCleanup?.();
         } catch (err) {
           console.warn('Error during client cleanup:', err);
         }

@@ -24,7 +24,7 @@ export interface ChannelMessage {
   content: string;
   timestamp: number;
   type: 'text' | 'image' | 'file';
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface UserPresence {
@@ -50,12 +50,12 @@ export interface ServerToClientEvents {
   
   'channel:joined': (userId: string, channelId: string) => void;
   'channel:left': (userId: string, channelId: string) => void;
-  'channel:updated': (channelId: string, updates: Record<string, any>) => void;
+  'channel:updated': (channelId: string, updates: Record<string, unknown>) => void;
   
   'user:presence': (presence: UserPresence) => void;
   'user:typing': (typing: TypingIndicator) => void;
   
-  'notification:new': (notification: Record<string, any>) => void;
+  'notification:new': (notification: Record<string, unknown>) => void;
   'error': (error: string) => void;
 }
 

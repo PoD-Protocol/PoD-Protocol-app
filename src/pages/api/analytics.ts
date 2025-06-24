@@ -6,7 +6,7 @@ interface AnalyticsData {
   userId?: string;
   events: Array<{
     name: string;
-    properties?: Record<string, any>;
+    properties?: Record<string, string | number | boolean>;
     timestamp: number;
     sessionId: string;
     userId?: string;

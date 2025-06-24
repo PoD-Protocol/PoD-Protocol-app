@@ -73,8 +73,8 @@ export const trackWebVitals = () => {
       
       // Track CLS - should be under 0.1
       console.log('CLS:', clsValue);
-      if (typeof (window as any).gtag !== 'undefined') {
-        (window as any).gtag('event', 'web_vital', {
+      if (typeof (window as WindowWithGtag).gtag !== 'undefined') {
+        (window as WindowWithGtag).gtag!('event', 'web_vital', {
           name: 'CLS',
           value: clsValue,
           event_category: 'performance',
@@ -312,7 +312,7 @@ export const initializePerformanceOptimizations = () => {
   });
 };
 
-export default {
+const PerformanceExport = {
   trackWebVitals,
   optimizeResourceLoading,
   optimizeMemory,
@@ -321,3 +321,5 @@ export default {
   performanceMonitor,
   initializePerformanceOptimizations,
 };
+
+export default PerformanceExport;

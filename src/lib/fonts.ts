@@ -114,7 +114,7 @@ export const fontVariables = {
   // '--font-custom-brand': customBrand.style.fontFamily, // removed
 };
 
-export default {
+const FontsExport = {
   inter,
   jetbrainsMono,
   orbitron,
@@ -123,3 +123,5 @@ export default {
   fontConfig,
   fontVariables,
 };
+
+export default FontsExport;

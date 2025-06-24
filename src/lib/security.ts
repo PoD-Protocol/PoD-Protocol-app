@@ -204,7 +204,7 @@ export const rateLimiter = {
 // Secure storage utilities
 export const secureStorage = {
   // Encrypt data before storing
-  setSecure: (key: string, value: any, ttl?: number): void => {
+  setSecure: (key: string, value: unknown, ttl?: number): void => {
     if (typeof window === 'undefined') return;
 
     const data = {
@@ -222,7 +222,7 @@ export const secureStorage = {
   },
 
   // Decrypt and retrieve data
-  getSecure: (key: string): any => {
+  getSecure: (key: string): unknown => {
     if (typeof window === 'undefined') return null;
 
     try {
@@ -343,7 +343,7 @@ export const initializeSecurity = (): void => {
   });
 };
 
-export default {
+const SecurityExport = {
   sanitizeInput,
   cspConfig,
   rateLimiter,
@@ -352,3 +352,5 @@ export default {
   csrfProtection,
   initializeSecurity,
 };
+
+export default SecurityExport;

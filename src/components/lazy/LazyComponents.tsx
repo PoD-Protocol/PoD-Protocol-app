@@ -5,6 +5,9 @@ import { Suspense } from 'react';
 import LoadingState, { LoadingSpinner } from '../ui/LoadingState';
 import { SkeletonCard } from '../ui/SkeletonLoader';
 
+// Component type for dynamic imports
+type DynamicComponent = React.ComponentType<Record<string, unknown>>;
+
 // Dynamic import wrapper with proper loading states
 const createLazyComponent = <T extends object>(
   importFn: () => Promise<{ default: React.ComponentType<T> }>,
@@ -22,7 +25,7 @@ const createLazyComponent = <T extends object>(
 
 // Lazy-loaded modals (heavy components that aren't needed immediately)
 export const LazyCreateChannelModal = createLazyComponent(
-  () => Promise.resolve({ default: () => null }) as Promise<{ default: React.ComponentType<any> }>,
+  () => Promise.resolve({ default: () => null }) as Promise<{ default: DynamicComponent }>,
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
     <div className="bg-gray-900/95 backdrop-blur-sm rounded-xl p-6 border border-purple-500/20 max-w-md w-full mx-4">
       <div className="space-y-4">
@@ -147,12 +150,12 @@ export const withLazyLoading = <P extends object>(
 };
 
 // Preloader utility for critical components
-export const preloadComponent = (importFn: () => Promise<any>) => {
+export const preloadComponent = (importFn: () => Promise<{ default: DynamicComponent }>) => {
   // Only preload in browser environment
   if (typeof window !== 'undefined') {
     // Use requestIdleCallback if available, otherwise use setTimeout
     if ('requestIdleCallback' in window) {
-      (window as any).requestIdleCallback(() => {
+      (window as Window & { requestIdleCallback: (callback: () => void) => void }).requestIdleCallback(() => {
         importFn().catch(() => {
           // Ignore preload errors
         });
@@ -185,7 +188,7 @@ export const BundleOptimizer = {
   
   // Conditional loading based on feature flags
   loadFeature: async (featureName: string) => {
-    const features: Record<string, () => Promise<any>> = {
+    const features: Record<string, () => Promise<{ default: DynamicComponent }>> = {
       analytics: () => Promise.resolve({ default: () => null }),
       marketplace: () => Promise.resolve({ default: () => null }),
       developer: () => Promise.resolve({ default: () => null }),

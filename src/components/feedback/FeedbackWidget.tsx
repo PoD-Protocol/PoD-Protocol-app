@@ -49,7 +49,12 @@ const FeedbackWidget: React.FC<FeedbackWidgetProps> = ({
     'top-left': 'top-4 left-4',
   };
 
-  const feedbackTypes = [
+  const feedbackTypes: Array<{
+    value: 'bug' | 'feature' | 'general' | 'rating';
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    color: string;
+  }> = [
     { value: 'bug', label: 'Bug Report', icon: ExclamationTriangleIcon, color: 'text-red-400' },
     { value: 'feature', label: 'Feature Request', icon: HandThumbUpIcon, color: 'text-blue-400' },
     { value: 'general', label: 'General Feedback', icon: ChatBubbleBottomCenterTextIcon, color: 'text-purple-400' },
@@ -165,7 +170,7 @@ const FeedbackWidget: React.FC<FeedbackWidgetProps> = ({
                         return (
                           <button
                             key={type.value}
-                            onClick={() => setFeedbackType(type.value as any)}
+                            onClick={() => setFeedbackType(type.value)}
                             className={cn(
                               'p-3 rounded-lg border transition-all duration-200 text-left touch-manipulation',
                               isSelected 

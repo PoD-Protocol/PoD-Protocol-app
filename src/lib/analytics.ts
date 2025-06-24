@@ -184,17 +184,17 @@ class AnalyticsManager {
 
         // First Input Delay
         new PerformanceObserver((list) => {
-          list.getEntries().forEach((entry: any) => {
-            metrics.firstInputDelay = entry.processingStart - entry.startTime;
+          list.getEntries().forEach((entry: PerformanceEntry & { processingStart?: number }) => {
+            metrics.firstInputDelay = (entry.processingStart || 0) - entry.startTime;
           });
         }).observe({ entryTypes: ['first-input'] });
 
         // Cumulative Layout Shift
         let cumulativeScore = 0;
         new PerformanceObserver((list) => {
-          list.getEntries().forEach((entry: any) => {
+          list.getEntries().forEach((entry: PerformanceEntry & { hadRecentInput?: boolean; value?: number }) => {
             if (!entry.hadRecentInput) {
-              cumulativeScore += entry.value;
+              cumulativeScore += entry.value || 0;
             }
           });
           metrics.cumulativeLayoutShift = cumulativeScore;
@@ -215,7 +215,7 @@ class AnalyticsManager {
     this.userId = userId;
   }
 
-  track(eventName: string, properties?: Record<string, any>): void {
+  track(eventName: string, properties?: Record<string, string | number | boolean>): void {
     const event: AnalyticsEvent = {
       name: eventName,
       properties,
@@ -254,7 +254,7 @@ class AnalyticsManager {
     this.track('user_interaction', { type, target });
   }
 
-  trackFeatureUsage(feature: string, action: string, metadata?: Record<string, any>): void {
+  trackFeatureUsage(feature: string, action: string, metadata?: Record<string, string | number | boolean>): void {
     this.track('feature_usage', {
       feature,
       action,
@@ -262,8 +262,17 @@ class AnalyticsManager {
     });
   }
 
-  trackUserFeedback(feedback: any): void {
-    this.track('user_feedback', feedback);
+  trackUserFeedback(feedback: Record<string, unknown>): void {
+    // Convert unknown values to acceptable types for tracking
+    const sanitizedFeedback: Record<string, string | number | boolean> = {};
+    Object.entries(feedback).forEach(([key, value]) => {
+      if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+        sanitizedFeedback[key] = value;
+      } else {
+        sanitizedFeedback[key] = String(value);
+      }
+    });
+    this.track('user_feedback', sanitizedFeedback);
   }
 
   async sendBatch(): Promise<void> {
@@ -339,7 +348,7 @@ export const getAnalytics = (): AnalyticsManager => {
 };
 
 // Convenience functions
-export const track = (eventName: string, properties?: Record<string, any>) => {
+export const track = (eventName: string, properties?: Record<string, string | number | boolean>) => {
   getAnalytics()?.track(eventName, properties);
 };
 
@@ -347,11 +356,11 @@ export const trackPageView = (path: string) => {
   getAnalytics()?.trackPageView(path);
 };
 
-export const trackFeatureUsage = (feature: string, action: string, metadata?: Record<string, any>) => {
+export const trackFeatureUsage = (feature: string, action: string, metadata?: Record<string, string | number | boolean>) => {
   getAnalytics()?.trackFeatureUsage(feature, action, metadata);
 };
 
-export const trackUserFeedback = (feedback: any) => {
+export const trackUserFeedback = (feedback: Record<string, unknown>) => {
   getAnalytics()?.trackUserFeedback(feedback);
 };
 
@@ -359,7 +368,7 @@ export const setUserId = (userId: string) => {
   getAnalytics()?.setUserId(userId);
 };
 
-export default {
+const AnalyticsExport = {
   getAnalytics,
   track,
   trackPageView,
@@ -367,3 +376,5 @@ export default {
   trackUserFeedback,
   setUserId,
 };
+
+export default AnalyticsExport;
