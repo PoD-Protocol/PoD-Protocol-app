@@ -41,7 +41,7 @@ export default function usePodClient() {
     if (typeof window !== 'undefined') {
       config.ipfs = {
         disabled: true
-      };
+      } as any; // Type assertion needed due to SDK type definitions
     }
 
     return new PodComClient(config);

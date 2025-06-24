@@ -23,93 +23,11 @@ const nextConfig = {
     } : false,
   },
 
-  // Bundle analyzer and optimization
-  webpack: (config, { dev, isServer }) => {
-    // Production optimizations
-    if (!dev && !isServer) {
-      // Enable tree shaking for unused exports
-      config.optimization.usedExports = true;
-      
-      // Split vendor chunks more granularly
-      config.optimization.splitChunks = {
-        ...config.optimization.splitChunks,
-        cacheGroups: {
-          default: false,
-          vendors: false,
-          // Framework chunk (React, Next.js)
-          framework: {
-            chunks: 'all',
-            name: 'framework',
-            test: /(?<!node_modules.*)[\\/]node_modules[\\/](react|react-dom|scheduler|prop-types|use-subscription)[\\/]/,
-            priority: 40,
-            enforce: true,
-          },
-          // Vendor libraries
-          lib: {
-            test(module) {
-              return (
-                module.size() > 160000 &&
-                /node_modules[/\\]/.test(module.identifier())
-              );
-            },
-            name(module) {
-              const hash = require('crypto')
-                .createHash('sha1')
-                .update(module.identifier())
-                .digest('hex')
-                .substring(0, 8);
-              return `lib-${hash}`;
-            },
-            priority: 30,
-            minChunks: 1,
-            reuseExistingChunk: true,
-            chunks: 'all',
-          },
-          // Common chunks
-          commons: {
-            name: 'commons',
-            minChunks: 2,
-            priority: 20,
-            chunks: 'all',
-            reuseExistingChunk: true,
-          },
-          // Solana/Web3 specific chunks
-          web3: {
-            test: /[\\/]node_modules[\\/](@solana|@coral-xyz|@metaplex|web3)[\\/]/,
-            name: 'web3',
-            priority: 35,
-            chunks: 'all',
-            reuseExistingChunk: true,
-          },
-          // UI libraries chunk
-          ui: {
-            test: /[\\/]node_modules[\\/](@headlessui|@heroicons|framer-motion|tailwind)[\\/]/,
-            name: 'ui',
-            priority: 35,
-            chunks: 'all',
-            reuseExistingChunk: true,
-          },
-        },
-      };
-
-      // Bundle analyzer (enable with ANALYZE=true)
-      if (process.env.ANALYZE) {
-        const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
-        config.plugins.push(
-          new BundleAnalyzerPlugin({
-            analyzerMode: 'static',
-            openAnalyzer: false,
-            reportFilename: './analyze/client.html',
-          })
-        );
-      }
-    }
-
-    // Optimize module resolution
+  // Simple webpack configuration to handle native modules
+  webpack: (config, { isServer }) => {
+    // Module resolution aliases
     config.resolve.alias = {
       ...config.resolve.alias,
-      // Optimize React imports
-      'react/jsx-runtime': require.resolve('react/jsx-runtime'),
       // Fix @coral-xyz/anchor default export issue
       '@coral-xyz/anchor$': require('path').resolve(__dirname, 'anchor-default.js'),
     };
@@ -122,42 +40,29 @@ const nextConfig = {
       tls: false,
       crypto: false,
       buffer: require.resolve("buffer"),
+      // Native modules that should be ignored in browser
+      'node-datachannel': false,
+      'better-sqlite3': false,
+      'sqlite3': false,
+      'leveldown': false,
+      'node-gyp-build': false,
     };
 
-    // Client-side optimizations and polyfills
+    // For client-side builds, exclude native modules
     if (!isServer) {
-      const webpack = require('webpack');
-      
-      // Exclude problematic native modules from client bundle
       config.externals = [
         ...(config.externals || []),
-        // IPFS/Helia native dependencies
         'node-datachannel',
-        '@chainsafe/libp2p-noise',
-        '@chainsafe/is-ip',
         'better-sqlite3',
         'sqlite3',
         'leveldown',
         'node-gyp-build',
-        // Other native modules that may cause issues
-        'sharp',
-        'canvas',
-        'fsevents',
       ];
 
-      // Configure webpack plugins
-      config.plugins = config.plugins || [];
-      
-      // Ignore native modules
-      config.plugins.push(
-        new webpack.IgnorePlugin({
-          resourceRegExp: /^(node-datachannel|better-sqlite3|sqlite3|leveldown|node-gyp-build)$/,
-        })
-      );
-      
       // Add buffer polyfill
+      config.plugins = config.plugins || [];
       config.plugins.push(
-        new webpack.ProvidePlugin({
+        new (require('webpack')).ProvidePlugin({
           Buffer: ['buffer', 'Buffer'],
         })
       );
