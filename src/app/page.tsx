@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
   ArrowRightIcon,
   ShieldCheckIcon,
@@ -24,15 +24,13 @@ import {
   CardContent,
   Chip,
   Stack,
-  Avatar,
-  IconButton,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 
 // Styled components for glassmorphism effect
-const GlassCard = styled(Card)(({ theme }) => ({
+const GlassCard = styled(Card)(() => ({
   background: 'rgba(99, 102, 241, 0.1)',
   backdropFilter: 'blur(20px)',
   border: '1px solid rgba(147, 51, 234, 0.2)',
@@ -44,7 +42,7 @@ const GlassCard = styled(Card)(({ theme }) => ({
   },
 }));
 
-const HeroSection = styled(Box)(({ theme }) => ({
+const HeroSection = styled(Box)(() => ({
   background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%)',
   minHeight: '100vh',
   display: 'flex',
@@ -63,18 +61,10 @@ const HeroSection = styled(Box)(({ theme }) => ({
   },
 }));
 
-const StatsCard = styled(Card)(({ theme }) => ({
-  background: 'rgba(17, 24, 39, 0.8)',
-  backdropFilter: 'blur(20px)',
-  border: '1px solid rgba(147, 51, 234, 0.3)',
-  borderRadius: 12,
-  textAlign: 'center',
-  padding: theme.spacing(3),
-}));
 
 const LandingPage = () => {
   const router = useRouter();
-  const { connected, publicKey } = useWallet();
+  const { connected } = useWallet();
   const [stats, setStats] = useState({
     agents: 1247,
     messages: 89432,

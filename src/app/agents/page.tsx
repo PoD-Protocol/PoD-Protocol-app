@@ -29,7 +29,7 @@ const AgentsPage = () => {
     const loadAgents = async () => {
       try {
         setAgentsLoading(true);
-        const fetched = await client.agents.getAllAgents(50);
+        const fetched = await client.agent.getAllAgents(50);
         const processed: Agent[] = fetched.map((a) => ({
           id: a.pubkey.toBase58(),
           name: a.metadataUri,
