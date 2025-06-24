@@ -9,7 +9,6 @@ import {
   HashtagIcon,
   UserIcon,
 } from '@heroicons/react/24/outline';
-import { cn } from '../../lib/utils';
 
 interface SearchResult {
   id: string;
@@ -222,7 +221,7 @@ const MobileSearchOverlay: React.FC<MobileSearchOverlayProps> = ({
                   ) : !isSearching ? (
                     <div className="text-center py-12">
                       <MagnifyingGlassIcon className="h-12 w-12 text-gray-600 mx-auto mb-4" />
-                      <p className="text-gray-400">No results found for "{query}"</p>
+                      <p className="text-gray-400">No results found for &quot;{query}&quot;</p>
                       <p className="text-gray-500 text-sm mt-2">
                         Try different keywords or check your spelling
                       </p>

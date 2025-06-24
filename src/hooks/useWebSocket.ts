@@ -235,6 +235,18 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
     socketRef.current.emit('user:status', status);
   }, []);
 
+  const stopTyping = useCallback((channelId: string) => {
+    if (!socketRef.current) return;
+    
+    socketRef.current.emit('user:typing:stop', channelId);
+    
+    const timeout = typingTimeoutRef.current.get(channelId);
+    if (timeout) {
+      clearTimeout(timeout);
+      typingTimeoutRef.current.delete(channelId);
+    }
+  }, []);
+
   const startTyping = useCallback((channelId: string) => {
     if (!socketRef.current) return;
     
@@ -251,19 +263,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
     }, 3000);
     
     typingTimeoutRef.current.set(channelId, timeout);
-  }, []);
-
-  const stopTyping = useCallback((channelId: string) => {
-    if (!socketRef.current) return;
-    
-    socketRef.current.emit('user:typing:stop', channelId);
-    
-    const timeout = typingTimeoutRef.current.get(channelId);
-    if (timeout) {
-      clearTimeout(timeout);
-      typingTimeoutRef.current.delete(channelId);
-    }
-  }, []);
+  }, [stopTyping]);
 
   // Event listener methods
   const onMessage = useCallback((callback: (message: ChannelMessage) => void) => {
@@ -323,8 +323,9 @@ export function useWebSocket(options: UseWebSocketOptions = {}): UseWebSocketRet
 
     return () => {
       // Cleanup typing timeouts
-      typingTimeoutRef.current.forEach(timeout => clearTimeout(timeout));
-      typingTimeoutRef.current.clear();
+      const currentTimeouts = typingTimeoutRef.current;
+      currentTimeouts.forEach(timeout => clearTimeout(timeout));
+      currentTimeouts.clear();
       
       // Disconnect on unmount
       disconnect();

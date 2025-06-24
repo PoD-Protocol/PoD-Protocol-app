@@ -4,7 +4,7 @@
 
 interface AnalyticsEvent {
   name: string;
-  properties?: Record<string, any>;
+  properties?: Record<string, string | number | boolean>;
   timestamp: number;
   sessionId: string;
   userId?: string;
@@ -168,7 +168,7 @@ class AnalyticsManager {
         
         const metrics: Partial<PerformanceMetrics> = {
           loadTime: navigation.loadEventEnd - navigation.loadEventStart,
-          timeToInteractive: navigation.domInteractive - (navigation as any).navigationStart,
+          timeToInteractive: navigation.domInteractive - ((navigation as PerformanceNavigationTiming & { navigationStart?: number }).navigationStart || 0),
         };
 
         // First Contentful Paint

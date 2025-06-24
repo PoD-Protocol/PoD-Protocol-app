@@ -94,12 +94,14 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
           {...imageProps}
           fill
           style={{ objectFit: 'cover' }}
+          alt={alt || 'Image'}
         />
       ) : (
         <Image
           {...imageProps}
           width={width}
           height={height}
+          alt={alt || 'Image'}
         />
       )}
       

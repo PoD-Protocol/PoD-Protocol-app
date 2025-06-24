@@ -2,6 +2,24 @@
  * Performance optimization utilities
  */
 
+// Performance API interfaces
+interface PerformanceEntryWithProcessing extends PerformanceEntry {
+  processingStart?: number;
+}
+
+interface PerformanceEntryWithLayoutShift extends PerformanceEntry {
+  hadRecentInput?: boolean;
+  value?: number;
+}
+
+interface PerformanceResourceTiming extends PerformanceEntry {
+  transferSize?: number;
+}
+
+interface WindowWithGtag extends Window {
+  gtag?: (event: string, action: string, params: Record<string, unknown>) => void;
+}
+
 // Web Vitals tracking
 export const trackWebVitals = () => {
   if (typeof window === 'undefined') return;
@@ -17,8 +35,8 @@ export const trackWebVitals = () => {
       if (lastEntry.startTime > 0) {
         console.log('LCP:', lastEntry.startTime);
         // Send to analytics if available
-        if (typeof (window as any).gtag !== 'undefined') {
-          (window as any).gtag('event', 'web_vital', {
+        if (typeof (window as WindowWithGtag).gtag !== 'undefined') {
+          (window as WindowWithGtag).gtag!('event', 'web_vital', {
             name: 'LCP',
             value: Math.round(lastEntry.startTime),
             event_category: 'performance',
@@ -30,12 +48,13 @@ export const trackWebVitals = () => {
     // First Input Delay (FID)
     new PerformanceObserver((list) => {
       list.getEntries().forEach((entry) => {
+        const fidEntry = entry as PerformanceEntryWithProcessing;
         // Track FID - should be under 100ms
-        console.log('FID:', (entry as any).processingStart - entry.startTime);
-        if (typeof (window as any).gtag !== 'undefined') {
-          (window as any).gtag('event', 'web_vital', {
+        console.log('FID:', (fidEntry.processingStart || 0) - entry.startTime);
+        if (typeof (window as WindowWithGtag).gtag !== 'undefined') {
+          (window as WindowWithGtag).gtag!('event', 'web_vital', {
             name: 'FID',
-            value: Math.round((entry as any).processingStart - entry.startTime),
+            value: Math.round((fidEntry.processingStart || 0) - entry.startTime),
             event_category: 'performance',
           });
         }
@@ -46,8 +65,9 @@ export const trackWebVitals = () => {
     let clsValue = 0;
     new PerformanceObserver((list) => {
       list.getEntries().forEach((entry) => {
-        if (!(entry as any).hadRecentInput) {
-          clsValue += (entry as any).value;
+        const clsEntry = entry as PerformanceEntryWithLayoutShift;
+        if (!clsEntry.hadRecentInput) {
+          clsValue += clsEntry.value || 0;
         }
       });
       
@@ -192,8 +212,9 @@ export const bundleAnalysis = {
 
     const observer = new PerformanceObserver((list) => {
       list.getEntries().forEach((entry) => {
+        const resourceEntry = entry as PerformanceResourceTiming;
         if (entry.name.includes('chunk') || entry.name.includes('bundle')) {
-          console.log(`Bundle: ${entry.name}, Size: ${(entry as any).transferSize} bytes`);
+          console.log(`Bundle: ${entry.name}, Size: ${resourceEntry.transferSize || 0} bytes`);
         }
       });
     });

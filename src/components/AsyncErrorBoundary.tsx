@@ -82,7 +82,7 @@ const AsyncErrorBoundary: React.FC<Props> = ({ children, onRetry, fallback }) =>
             </h3>
             
             <p className="text-gray-400 mb-6">
-              We couldn't complete your request. This might be due to a network issue or server problem.
+              We couldn&apos;t complete your request. This might be due to a network issue or server problem.
             </p>
 
             {process.env.NODE_ENV === 'development' && asyncErrorState.asyncError && (

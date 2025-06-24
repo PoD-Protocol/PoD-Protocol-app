@@ -17,7 +17,6 @@ import Link from 'next/link';
 import useStore from '../store/useStore';
 import MatrixRain from '../ui/MatrixRain';
 import AsyncErrorBoundary from '../AsyncErrorBoundary';
-import ResponsiveContainer from '../ui/ResponsiveContainer';
 import { cn } from '../../lib/utils';
 
 interface DashboardLayoutProps {
@@ -52,13 +51,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     return () => window.removeEventListener('resize', checkMobile);
   }, [setSidebarCollapsed]);
 
-  const handleMobileMenuToggle = () => {
-    if (isMobile) {
-      setMobileMenuOpen(!mobileMenuOpen);
-    } else {
-      setSidebarCollapsed(!sidebarCollapsed);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/20 to-gray-900">

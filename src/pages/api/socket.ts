@@ -4,7 +4,7 @@ import { initializeWebSocketServer, NextApiResponseWithSocket } from '../../lib/
 export default function handler(req: NextApiRequest, res: NextApiResponseWithSocket) {
   if (req.method === 'POST') {
     // Initialize WebSocket server
-    const io = initializeWebSocketServer(res, {
+    initializeWebSocketServer(res, {
       cors: {
         origin: process.env.NODE_ENV === 'production'
           ? ['https://pod-protocol.com'] // Update with your actual domain

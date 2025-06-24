@@ -15,7 +15,14 @@ jest.mock('react-hot-toast', () => ({
 }));
 
 describe('useWebSocket', () => {
-  let mockSocket: any;
+  let mockSocket: {
+    connected: boolean;
+    on: jest.Mock;
+    off: jest.Mock;
+    emit: jest.Mock;
+    connect: jest.Mock;
+    disconnect: jest.Mock;
+  };
 
   beforeEach(() => {
     // Create a mock socket object

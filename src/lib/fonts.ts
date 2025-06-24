@@ -1,5 +1,4 @@
 import { Inter, JetBrains_Mono, Orbitron } from 'next/font/google';
-import localFont from 'next/font/local';
 
 // Primary font - Inter for body text
 export const inter = Inter({
@@ -84,7 +83,7 @@ export const preloadFonts = () => {
   
   // Inter weights commonly used
   const interWeights = [300, 400, 500, 600, 700];
-  interWeights.forEach(weight => {
+  interWeights.forEach(() => {
     const linkElement = link.cloneNode() as HTMLLinkElement;
     linkElement.href = `https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiA.woff2`;
     document.head.appendChild(linkElement);

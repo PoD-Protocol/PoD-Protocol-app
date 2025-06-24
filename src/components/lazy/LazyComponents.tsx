@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import { Suspense } from 'react';
 import LoadingState, { LoadingSpinner } from '../ui/LoadingState';
-import { SkeletonCard, SkeletonChannelList } from '../ui/SkeletonLoader';
+import { SkeletonCard } from '../ui/SkeletonLoader';
 
 // Dynamic import wrapper with proper loading states
 const createLazyComponent = <T extends object>(
@@ -199,7 +199,7 @@ export const BundleOptimizer = {
   },
 };
 
-export default {
+const LazyComponentsExport = {
   LazyCreateChannelModal,
   LazySettingsModal,
   LazyUserProfileModal,
@@ -216,3 +216,5 @@ export default {
   preloadCriticalComponents,
   BundleOptimizer,
 };
+
+export default LazyComponentsExport;
