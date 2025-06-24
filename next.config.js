@@ -110,7 +110,29 @@ const nextConfig = {
       ...config.resolve.alias,
       // Optimize React imports
       'react/jsx-runtime': require.resolve('react/jsx-runtime'),
+      // Fix @coral-xyz/anchor default export issue
+      '@coral-xyz/anchor$': require('path').resolve(__dirname, 'anchor-default.js'),
     };
+
+    // Add Node.js polyfills for browser compatibility
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      net: false,
+      tls: false,
+      crypto: false,
+      buffer: require.resolve("buffer"),
+    };
+
+    // Add buffer polyfill
+    if (!isServer) {
+      config.plugins = config.plugins || [];
+      config.plugins.push(
+        new (require('webpack')).ProvidePlugin({
+          Buffer: ['buffer', 'Buffer'],
+        })
+      );
+    }
 
     return config;
   },
@@ -276,6 +298,9 @@ const nextConfig = {
       },
     ];
   },
+
+  // Turbopack is enabled by default in Next.js 15
+  // No additional turbo config needed here
 };
 
 module.exports = nextConfig;

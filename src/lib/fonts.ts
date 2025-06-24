@@ -51,24 +51,25 @@ export const orbitron = Orbitron({
 });
 
 // Custom local font for branding (if needed)
-export const customBrand = localFont({
-  src: [
-    {
-      path: '../assets/fonts/CustomBrand-Regular.woff2',
-      weight: '400',
-      style: 'normal',
-    },
-    {
-      path: '../assets/fonts/CustomBrand-Bold.woff2',
-      weight: '700',
-      style: 'normal',
-    },
-  ],
-  variable: '--font-custom-brand',
-  display: 'swap',
-  fallback: ['system-ui', 'sans-serif'],
-  preload: false,
-});
+// Disabled due to missing font files
+// export const customBrand = localFont({
+//   src: [
+//     {
+//       path: '../assets/fonts/CustomBrand-Regular.woff2',
+//       weight: '400',
+//       style: 'normal',
+//     },
+//     {
+//       path: '../assets/fonts/CustomBrand-Bold.woff2',
+//       weight: '700',
+//       style: 'normal',
+//     },
+//   ],
+//   variable: '--font-custom-brand',
+//   display: 'swap',
+//   fallback: ['system-ui', 'sans-serif'],
+//   preload: false,
+// });
 
 // Font loading utility
 export const preloadFonts = () => {
@@ -96,7 +97,7 @@ export const fontConfig = {
   critical: [inter],
   
   // Fonts that can be lazy loaded
-  lazy: [jetbrainsMono, orbitron, customBrand],
+  lazy: [jetbrainsMono, orbitron], // removed customBrand
   
   // Font display strategies
   strategies: {
@@ -111,14 +112,14 @@ export const fontVariables = {
   '--font-inter': inter.style.fontFamily,
   '--font-jetbrains-mono': jetbrainsMono.style.fontFamily,
   '--font-orbitron': orbitron.style.fontFamily,
-  '--font-custom-brand': customBrand.style.fontFamily,
+  // '--font-custom-brand': customBrand.style.fontFamily, // removed
 };
 
 export default {
   inter,
   jetbrainsMono,
   orbitron,
-  customBrand,
+  // customBrand, // removed
   preloadFonts,
   fontConfig,
   fontVariables,

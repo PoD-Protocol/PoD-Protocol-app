@@ -17,7 +17,7 @@ const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
   rounded = false,
   animate = true,
 }) => {
-  const baseClasses = `bg-gray-700/50 ${rounded ? 'rounded-full' : 'rounded'} ${className}`;
+  const baseClasses = `bg-gray-700/50 ${rounded ? 'rounded-full' : 'rounded-md'} ${className}`;
   
   const style = {
     width: typeof width === 'number' ? `${width}px` : width,

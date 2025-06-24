@@ -24,11 +24,12 @@ import { cn } from '../lib/utils';
 
 const ChannelsPage = () => {
   const router = useRouter();
-  const { channels, setChannels, setChannelsLoading, setChannelsError, setActiveChannel, channelsLoading, channelsError } = useStore();
+  const { channels, setChannels, setChannelsLoading, setChannelsError, setActiveChannel } = useStore();
   const { client, isInitialized, initError } = usePodClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<ChannelType | 'all'>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [channelsLoading, setChannelsLoadingLocal] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -46,6 +47,7 @@ const ChannelsPage = () => {
 
     const loadChannels = async () => {
       try {
+        setChannelsLoadingLocal(true);
         setChannelsLoading(true);
         setChannelsError(null);
         
@@ -72,9 +74,8 @@ const ChannelsPage = () => {
         setChannels(processed);
       } catch (err) {
         console.error('Failed to fetch channels', err);
-        const errorMessage = err instanceof Error ? err.message : 'Failed to load channels';
-        setChannelsError(errorMessage);
       } finally {
+        setChannelsLoadingLocal(false);
         setChannelsLoading(false);
       }
     };
@@ -104,22 +105,20 @@ const ChannelsPage = () => {
     setCreateError(null);
 
     try {
-      const newChannel = await client.channels.createChannel({
-        name: formData.name.trim(),
-        description: formData.description.trim() || undefined,
-        visibility: formData.isPrivate ? 'private' : 'public',
-        channelType: formData.type
-      });
+      const newChannelId = await client.channels.createChannel(
+        formData.name.trim(),
+        formData.description.trim() || undefined
+      );
 
       // Add new channel to local state
       const processedChannel: Channel = {
-        id: newChannel.pubkey.toBase58(),
-        name: newChannel.name,
-        description: newChannel.description,
+        id: newChannelId,
+        name: formData.name.trim(),
+        description: formData.description.trim(),
         type: formData.type,
         participants: [],
         agents: [],
-        owner: newChannel.creator.toBase58(),
+        owner: '', // You'll need to get the current user's public key
         isPrivate: formData.isPrivate,
         createdAt: new Date(),
         lastActivity: new Date(),
@@ -525,7 +524,7 @@ const ChannelsPage = () => {
                     checked={formData.isPrivate}
                     onChange={(e) => handleInputChange('isPrivate', e.target.checked)}
                     disabled={isCreating}
-                    className="rounded border-purple-500/20 bg-gray-800/50 text-purple-600 focus:ring-purple-500/50 disabled:opacity-50"
+                    className="rounded-md border-purple-500/20 bg-gray-800/50 text-purple-600 focus:ring-purple-500/50 disabled:opacity-50"
                   />
                   <label htmlFor="private" className="text-sm text-gray-300">
                     Make this channel private
