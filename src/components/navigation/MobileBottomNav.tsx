@@ -80,7 +80,7 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
     >
       <div className="flex items-center justify-around px-2 py-2">
         {navigation.map((item, index) => {
-          const isActive = pathname.startsWith(item.href);
+          const isActive = pathname?.startsWith(item.href) ?? false;
           const IconComponent = isActive ? item.iconSolid : item.icon;
           
           return (

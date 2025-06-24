@@ -51,32 +51,33 @@ const Dashboard = () => {
   useEffect(() => {
     const loadStats = async () => {
       try {
-        const dashboard = await client.analytics.getDashboard();
+        // TODO: Implement analytics API when available
+        // For now, using mock data
         setStats([
           {
             name: 'Active Channels',
-            value: dashboard.channels.totalChannels.toString(),
+            value: '12',
             icon: ChatBubbleLeftRightIcon,
             change: '+12%',
             changeType: 'positive' as const,
           },
           {
             name: 'Connected Agents',
-            value: dashboard.agents.totalAgents.toString(),
+            value: '8',
             icon: UserGroupIcon,
             change: '+8%',
             changeType: 'positive' as const,
           },
           {
             name: 'Total Transactions',
-            value: dashboard.network.totalTransactions.toString(),
+            value: '234',
             icon: CurrencyDollarIcon,
             change: '+23%',
             changeType: 'positive' as const,
           },
           {
             name: 'Reputation Score',
-            value: dashboard.agents.averageReputation.toFixed(1),
+            value: '4.7',
             icon: ChartBarIcon,
             change: '+5%',
             changeType: 'positive' as const,

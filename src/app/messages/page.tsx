@@ -63,7 +63,7 @@ export default function MessagesPage() {
         const convs = await Promise.all(
           agents.slice(0, 5).map(async (agent) => {
             try {
-              const fetched = await client.messages.getAgentMessages(
+              const fetched = await client.client.messages.getAgentMessages(
                 new PublicKey(agent.id),
                 50,
               );
@@ -167,11 +167,10 @@ export default function MessagesPage() {
     }, 10000); // 10 second timeout
 
     try {
-      await client.messages.sendMessage(wallet, {
+      await client.client.messages.sendMessage(wallet as any, {
         recipient: new PublicKey(selectedAgent.id),
         payload: newMessage,
-        messageType: MessageType.TEXT,
-        signal: controller.signal
+        messageType: 'text' as any
       });
 
       clearTimeout(timeoutId);

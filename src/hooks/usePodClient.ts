@@ -74,9 +74,9 @@ export default function usePodClient() {
     return () => {
       mounted = false;
       // Cleanup client on unmount
-      if (client && typeof client.secureCleanup === 'function') {
+      if (client && typeof (client as any).secureCleanup === 'function') {
         try {
-          client.secureCleanup();
+          (client as any).secureCleanup();
         } catch (err) {
           console.warn('Error during client cleanup:', err);
         }

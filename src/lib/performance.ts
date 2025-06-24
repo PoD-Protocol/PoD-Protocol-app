@@ -17,8 +17,8 @@ export const trackWebVitals = () => {
       if (lastEntry.startTime > 0) {
         console.log('LCP:', lastEntry.startTime);
         // Send to analytics if available
-        if (typeof gtag !== 'undefined') {
-          gtag('event', 'web_vital', {
+        if (typeof (window as any).gtag !== 'undefined') {
+          (window as any).gtag('event', 'web_vital', {
             name: 'LCP',
             value: Math.round(lastEntry.startTime),
             event_category: 'performance',
@@ -31,11 +31,11 @@ export const trackWebVitals = () => {
     new PerformanceObserver((list) => {
       list.getEntries().forEach((entry) => {
         // Track FID - should be under 100ms
-        console.log('FID:', entry.processingStart - entry.startTime);
-        if (typeof gtag !== 'undefined') {
-          gtag('event', 'web_vital', {
+        console.log('FID:', (entry as any).processingStart - entry.startTime);
+        if (typeof (window as any).gtag !== 'undefined') {
+          (window as any).gtag('event', 'web_vital', {
             name: 'FID',
-            value: Math.round(entry.processingStart - entry.startTime),
+            value: Math.round((entry as any).processingStart - entry.startTime),
             event_category: 'performance',
           });
         }
@@ -46,15 +46,15 @@ export const trackWebVitals = () => {
     let clsValue = 0;
     new PerformanceObserver((list) => {
       list.getEntries().forEach((entry) => {
-        if (!entry.hadRecentInput) {
-          clsValue += entry.value;
+        if (!(entry as any).hadRecentInput) {
+          clsValue += (entry as any).value;
         }
       });
       
       // Track CLS - should be under 0.1
       console.log('CLS:', clsValue);
-      if (typeof gtag !== 'undefined') {
-        gtag('event', 'web_vital', {
+      if (typeof (window as any).gtag !== 'undefined') {
+        (window as any).gtag('event', 'web_vital', {
           name: 'CLS',
           value: clsValue,
           event_category: 'performance',
@@ -193,7 +193,7 @@ export const bundleAnalysis = {
     const observer = new PerformanceObserver((list) => {
       list.getEntries().forEach((entry) => {
         if (entry.name.includes('chunk') || entry.name.includes('bundle')) {
-          console.log(`Bundle: ${entry.name}, Size: ${entry.transferSize} bytes`);
+          console.log(`Bundle: ${entry.name}, Size: ${(entry as any).transferSize} bytes`);
         }
       });
     });

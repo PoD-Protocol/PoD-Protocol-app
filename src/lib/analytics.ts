@@ -168,7 +168,7 @@ class AnalyticsManager {
         
         const metrics: Partial<PerformanceMetrics> = {
           loadTime: navigation.loadEventEnd - navigation.loadEventStart,
-          timeToInteractive: navigation.domInteractive - navigation.navigationStart,
+          timeToInteractive: navigation.domInteractive - (navigation as any).navigationStart,
         };
 
         // First Contentful Paint

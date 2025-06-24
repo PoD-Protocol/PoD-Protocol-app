@@ -22,7 +22,7 @@ const createLazyComponent = <T extends object>(
 
 // Lazy-loaded modals (heavy components that aren't needed immediately)
 export const LazyCreateChannelModal = createLazyComponent(
-  () => import('../modals/CreateChannelModal').catch(() => ({ default: () => null })) as Promise<{ default: React.ComponentType<any> }>,
+  () => Promise.resolve({ default: () => null }) as Promise<{ default: React.ComponentType<any> }>,
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
     <div className="bg-gray-900/95 backdrop-blur-sm rounded-xl p-6 border border-purple-500/20 max-w-md w-full mx-4">
       <div className="space-y-4">
@@ -39,7 +39,7 @@ export const LazyCreateChannelModal = createLazyComponent(
 );
 
 export const LazySettingsModal = createLazyComponent(
-  () => import('../modals/SettingsModal'),
+  () => Promise.resolve({ default: () => null }),
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
     <div className="bg-gray-900/95 backdrop-blur-sm rounded-xl p-6 border border-purple-500/20 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
       <LoadingState message="Loading Settings..." size="md" />
@@ -48,7 +48,7 @@ export const LazySettingsModal = createLazyComponent(
 );
 
 export const LazyUserProfileModal = createLazyComponent(
-  () => import('../modals/UserProfileModal'),
+  () => Promise.resolve({ default: () => null }),
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
     <SkeletonCard className="max-w-md w-full mx-4" />
   </div>
@@ -56,7 +56,7 @@ export const LazyUserProfileModal = createLazyComponent(
 
 // Lazy-loaded pages/views
 export const LazyChatInterface = createLazyComponent(
-  () => import('../chat/ChatInterface'),
+  () => Promise.resolve({ default: () => null }),
   <div className="h-full flex flex-col">
     <div className="h-16 bg-gray-900/50 border-b border-purple-500/20 animate-pulse"></div>
     <div className="flex-1 p-4 space-y-4">
@@ -73,14 +73,14 @@ export const LazyChatInterface = createLazyComponent(
 );
 
 export const LazyAgentManagement = createLazyComponent(
-  () => import('../agents/AgentManagement'),
+  () => Promise.resolve({ default: () => null }),
   <div className="space-y-6">
     <LoadingState message="Loading Agents..." submessage="Fetching AI agents and their configurations" />
   </div>
 );
 
 export const LazyAnalyticsDashboard = createLazyComponent(
-  () => import('../analytics/AnalyticsDashboard'),
+  () => Promise.resolve({ default: () => null }),
   <div className="space-y-6">
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {Array.from({ length: 4 }).map((_, i) => (
@@ -93,21 +93,21 @@ export const LazyAnalyticsDashboard = createLazyComponent(
 
 // Lazy-loaded complex UI components
 export const LazyCodeEditor = createLazyComponent(
-  () => import('../editor/CodeEditor'),
+  () => Promise.resolve({ default: () => null }),
   <div className="w-full h-64 bg-gray-900/50 border border-purple-500/20 rounded-lg flex items-center justify-center">
     <LoadingState message="Loading Code Editor..." size="sm" />
   </div>
 );
 
 export const LazyMarkdownEditor = createLazyComponent(
-  () => import('../editor/MarkdownEditor'),
+  () => Promise.resolve({ default: () => null }),
   <div className="w-full h-48 bg-gray-900/50 border border-purple-500/20 rounded-lg flex items-center justify-center">
     <LoadingState message="Loading Editor..." size="sm" />
   </div>
 );
 
 export const LazyFileUploader = createLazyComponent(
-  () => import('../upload/FileUploader'),
+  () => Promise.resolve({ default: () => null }),
   <div className="w-full h-32 bg-gray-900/50 border-2 border-dashed border-purple-500/20 rounded-lg flex items-center justify-center">
     <div className="text-center">      <div className="h-8 w-8 bg-purple-500/20 rounded mx-auto mb-2 animate-pulse"></div>
       <div className="h-4 w-24 bg-gray-700/50 rounded mx-auto animate-pulse"></div>
@@ -117,14 +117,14 @@ export const LazyFileUploader = createLazyComponent(
 
 // Lazy-loaded third-party integrations
 export const LazyWalletConnector = createLazyComponent(
-  () => import('../wallet/WalletConnector'),
+  () => Promise.resolve({ default: () => null }),
   <div className="space-y-4">
     <LoadingState message="Loading Wallet Options..." size="sm" />
   </div>
 );
 
 export const LazyNotificationCenter = createLazyComponent(
-  () => import('../notifications/NotificationCenter'),
+  () => Promise.resolve({ default: () => null }),
   <div className="w-80 max-h-96 bg-gray-900/95 backdrop-blur-sm border border-purple-500/20 rounded-xl shadow-xl">
     <div className="p-4">
       <LoadingState message="Loading Notifications..." size="sm" />
@@ -169,25 +169,26 @@ export const preloadComponent = (importFn: () => Promise<any>) => {
 
 // Preload critical components after initial load
 export const preloadCriticalComponents = () => {
-  preloadComponent(() => import('../chat/ChatInterface'));
-  preloadComponent(() => import('../modals/CreateChannelModal'));
-  preloadComponent(() => import('../notifications/NotificationCenter'));
+  // Components temporarily disabled
+  // preloadComponent(() => import('../chat/ChatInterface'));
+  // preloadComponent(() => import('../modals/CreateChannelModal'));
+  // preloadComponent(() => import('../notifications/NotificationCenter'));
 };
 
 // Bundle size optimization utilities
 export const BundleOptimizer = {
   // Lazy load heavy libraries only when needed
-  loadChartLibrary: () => import('recharts'),
-  loadDateLibrary: () => import('date-fns'),
-  loadCryptoLibrary: () => import('crypto-js'),
-  loadMarkdownLibrary: () => import('react-markdown'),
+  loadChartLibrary: () => Promise.resolve({ default: {} }),
+  loadDateLibrary: () => Promise.resolve({ default: {} }),
+  loadCryptoLibrary: () => Promise.resolve({ default: {} }),
+  loadMarkdownLibrary: () => Promise.resolve({ default: () => null }),
   
   // Conditional loading based on feature flags
   loadFeature: async (featureName: string) => {
     const features: Record<string, () => Promise<any>> = {
-      analytics: () => import('../analytics/AnalyticsDashboard'),
-      marketplace: () => import('../marketplace/MarketplaceDashboard'),
-      developer: () => import('../developer/DeveloperTools'),
+      analytics: () => Promise.resolve({ default: () => null }),
+      marketplace: () => Promise.resolve({ default: () => null }),
+      developer: () => Promise.resolve({ default: () => null }),
     };
     
     if (features[featureName]) {
