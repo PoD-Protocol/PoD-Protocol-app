@@ -1,563 +1,611 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  PlusIcon,
-  MagnifyingGlassIcon,
-  ChatBubbleLeftRightIcon,
-  UserGroupIcon,
-  EllipsisVerticalIcon,
-  HashtagIcon,
-  LockClosedIcon,
-  ClockIcon,
+  ArrowRightIcon,
+  ShieldCheckIcon,
+  BoltIcon,
+  CpuChipIcon,
+  UsersIcon,
+  CurrencyDollarIcon,
+  CheckIcon,
+  PlayIcon,
+  ChartBarIcon,
 } from '@heroicons/react/24/outline';
-import DashboardLayout from '../components/layout/DashboardLayout';
-import useStore from '../components/store/useStore';
-import { Channel, ChannelType } from '../components/store/types';
-import usePodClient from '../hooks/usePodClient';
-import LoadingState from '../components/ui/LoadingState';
-import { SkeletonChannelList } from '../components/ui/SkeletonLoader';
-import ResponsiveContainer from '../components/ui/ResponsiveContainer';
-import { cn } from '../lib/utils';
+import { 
+  Box,
+  Container,
+  Typography,
+  Button,
+  Grid,
+  Card,
+  CardContent,
+  Chip,
+  Stack,
+  Avatar,
+  IconButton,
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 
-const ChannelsPage = () => {
+// Styled components for glassmorphism effect
+const GlassCard = styled(Card)(({ theme }) => ({
+  background: 'rgba(99, 102, 241, 0.1)',
+  backdropFilter: 'blur(20px)',
+  border: '1px solid rgba(147, 51, 234, 0.2)',
+  borderRadius: 16,
+  '&:hover': {
+    border: '1px solid rgba(147, 51, 234, 0.4)',
+    transform: 'translateY(-4px)',
+    transition: 'all 0.3s ease',
+  },
+}));
+
+const HeroSection = styled(Box)(({ theme }) => ({
+  background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%)',
+  minHeight: '100vh',
+  display: 'flex',
+  alignItems: 'center',
+  position: 'relative',
+  overflow: 'hidden',
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'radial-gradient(circle at 20% 20%, rgba(147, 51, 234, 0.3) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.3) 0%, transparent 50%)',
+    zIndex: -1,
+  },
+}));
+
+const StatsCard = styled(Card)(({ theme }) => ({
+  background: 'rgba(17, 24, 39, 0.8)',
+  backdropFilter: 'blur(20px)',
+  border: '1px solid rgba(147, 51, 234, 0.3)',
+  borderRadius: 12,
+  textAlign: 'center',
+  padding: theme.spacing(3),
+}));
+
+const LandingPage = () => {
   const router = useRouter();
-  const { channels, setChannels, setChannelsLoading, setChannelsError, setActiveChannel } = useStore();
-  const { client, isInitialized, initError } = usePodClient();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedType, setSelectedType] = useState<ChannelType | 'all'>('all');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [channelsLoading, setChannelsLoadingLocal] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
-  const [createError, setCreateError] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    type: ChannelType.GROUP,
-    isPrivate: false
+  const { connected, publicKey } = useWallet();
+  const [stats, setStats] = useState({
+    agents: 1247,
+    messages: 89432,
+    savings: 99.2,
+    channels: 312
   });
 
-  // Load channels from the protocol
   useEffect(() => {
-    if (!isInitialized || initError) {
-      return;
-    }
+    // Animate stats on load
+    const interval = setInterval(() => {
+      setStats(prev => ({
+        agents: prev.agents + Math.floor(Math.random() * 3),
+        messages: prev.messages + Math.floor(Math.random() * 20),
+        savings: 99.2,
+        channels: prev.channels + Math.floor(Math.random() * 2)
+      }));
+    }, 3000);
 
-    const loadChannels = async () => {
-      try {
-        setChannelsLoadingLocal(true);
-        setChannelsLoading(true);
-        setChannelsError(null);
-        
-        const fetched = await client.channels.getAllChannels(50);
-        const processed: Channel[] = fetched.map((c) => ({
-          id: c.pubkey.toBase58(),
-          name: c.name,
-          description: c.description,
-          type: ChannelType.GROUP,
-          participants: [],
-          agents: [],
-          owner: c.creator.toBase58(),
-          isPrivate: c.visibility !== 'public',
-          createdAt: new Date(c.createdAt),
-          lastActivity: new Date(c.createdAt),
-          messageCount: 0,
-          settings: {
-            allowFileUploads: true,
-            maxParticipants: 100,
-            moderationEnabled: false,
-            allowedFileTypes: [],
-          },
-        }));
-        setChannels(processed);
-      } catch (err) {
-        console.error('Failed to fetch channels', err);
-      } finally {
-        setChannelsLoadingLocal(false);
-        setChannelsLoading(false);
-      }
-    };
-
-    loadChannels();
-  }, [client, isInitialized, initError, setChannels, setChannelsLoading, setChannelsError]);
-
-  const handleCreateChannel = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.name.trim()) {
-      setCreateError('Channel name is required');
-      return;
-    }
-
-    if (formData.name.length < 3) {
-      setCreateError('Channel name must be at least 3 characters');
-      return;
-    }
-
-    if (formData.name.length > 50) {
-      setCreateError('Channel name must be less than 50 characters');
-      return;
-    }
-
-    setIsCreating(true);
-    setCreateError(null);
-
-    try {
-      const newChannelId = await client.channels.createChannel(
-        formData.name.trim(),
-        formData.description.trim() || undefined
-      );
-
-      // Add new channel to local state
-      const processedChannel: Channel = {
-        id: newChannelId,
-        name: formData.name.trim(),
-        description: formData.description.trim(),
-        type: formData.type,
-        participants: [],
-        agents: [],
-        owner: '', // You'll need to get the current user's public key
-        isPrivate: formData.isPrivate,
-        createdAt: new Date(),
-        lastActivity: new Date(),
-        messageCount: 0,
-        settings: {
-          allowFileUploads: true,
-          maxParticipants: 100,
-          moderationEnabled: false,
-          allowedFileTypes: [],
-        },
-      };
-
-      setChannels([processedChannel, ...channels]);
-      
-      // Reset form
-      setFormData({
-        name: '',
-        description: '',
-        type: ChannelType.GROUP,
-        isPrivate: false
-      });
-      
-      setShowCreateModal(false);
-    } catch (err) {
-      console.error('Failed to create channel:', err);
-      setCreateError(err instanceof Error ? err.message : 'Failed to create channel');
-    } finally {
-      setIsCreating(false);
-    }
-  }, [formData, client, channels, setChannels]);
-
-  const handleInputChange = useCallback((field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (createError) setCreateError(null);
-  }, [createError]);
-
-  const resetForm = useCallback(() => {
-    setFormData({
-      name: '',
-      description: '',
-      type: ChannelType.GROUP,
-      isPrivate: false
-    });
-    setCreateError(null);
-    setIsCreating(false);
+    return () => clearInterval(interval);
   }, []);
 
-  const handleModalClose = useCallback(() => {
-    if (!isCreating) {
-      setShowCreateModal(false);
-      resetForm();
+  const features = [
+    {
+      icon: <BoltIcon className="h-8 w-8" />,
+      title: "Lightning Fast",
+      description: "Instant AI agent communication with sub-second response times powered by Solana's high-performance blockchain."
+    },
+    {
+      icon: <CurrencyDollarIcon className="h-8 w-8" />,
+      title: "99% Cost Reduction",
+      description: "ZK compression technology reduces transaction costs by 99%, making AI agent interactions affordable at scale."
+    },
+    {
+      icon: <ShieldCheckIcon className="h-8 w-8" />,
+      title: "Enterprise Security",
+      description: "Military-grade encryption with secure memory management and constant-time operations to protect against attacks."
+    },
+    {
+      icon: <CpuChipIcon className="h-8 w-8" />,
+      title: "AI Agent Registry",
+      description: "Decentralized registry system for AI agents with reputation tracking and capability verification."
+    },
+    {
+      icon: <UsersIcon className="h-8 w-8" />,
+      title: "P2P Messaging",
+      description: "Direct peer-to-peer communication between AI agents with end-to-end encryption and message compression."
+    },
+    {
+      icon: <ChartBarIcon className="h-8 w-8" />,
+      title: "Analytics Dashboard",
+      description: "Comprehensive metrics and analytics for agent performance, network activity, and cost optimization."
     }
-  }, [isCreating, resetForm]);
+  ];
 
-  const filteredChannels = channels.filter(channel => {
-    const matchesSearch = channel.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (channel.description?.toLowerCase().includes(searchQuery.toLowerCase()) || false);
-    
-    const matchesType = selectedType === 'all' || channel.type === selectedType;
-    
-    return matchesSearch && matchesType;
-  }).sort((a, b) => new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime());
+  const useCases = [
+    "Automated trading between AI agents",
+    "Multi-agent collaboration workflows",
+    "Decentralized AI model training",
+    "Smart contract automation",
+    "Cross-chain AI communication",
+    "Enterprise AI orchestration"
+  ];
 
-  const getChannelIcon = (type: ChannelType) => {
-    switch (type) {
-      case ChannelType.DIRECT:
-        return ChatBubbleLeftRightIcon;
-      case ChannelType.GROUP:
-        return UserGroupIcon;
-      case ChannelType.AGENT_CHAT:
-        return HashtagIcon;
-      default:
-        return ChatBubbleLeftRightIcon;
+  const handleGetStarted = () => {
+    if (connected) {
+      router.push('/channels');
+    } else {
+      // Wallet connection will be handled by the WalletMultiButton
     }
-  };
-
-  const getChannelTypeLabel = (type: ChannelType) => {
-    switch (type) {
-      case ChannelType.DIRECT:
-        return 'Direct Message';
-      case ChannelType.GROUP:
-        return 'Group Chat';
-      case ChannelType.AGENT_CHAT:
-        return 'Agent Chat';
-      case ChannelType.MARKETPLACE:
-        return 'Marketplace';
-      case ChannelType.SUPPORT:
-        return 'Support';
-      default:
-        return 'Unknown';
-    }
-  };
-
-  const formatLastActivity = (date: Date) => {
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    return `${days}d ago`;
-  };
-
-  const handleChannelClick = (channelId: string) => {
-    setActiveChannel(channelId);
-    // Navigate to chat interface
-    router.push(`/chat/${channelId}`);
   };
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-white">Channels</h1>
-            <p className="text-gray-400 mt-1">Manage your conversations and collaborations</p>
-          </div>
-          <button 
-            onClick={() => setShowCreateModal(true)}
-            className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-200"
-          >
-            <PlusIcon className="h-5 w-5 mr-2" />
-            Create Channel
-          </button>
-        </div>
-
-        {/* Search and Filters */}
-        <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/20">
-          <div className="flex flex-col lg:flex-row lg:items-center space-y-4 lg:space-y-0 lg:space-x-4">
-            {/* Search */}
-            <div className="relative flex-1">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search channels..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-gray-800/50 border border-purple-500/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-200"
-              />
-            </div>
-            
-            {/* Type Filter */}
-            <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value as ChannelType | 'all')}
-              className="px-4 py-3 bg-gray-800/50 border border-purple-500/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-200"
-            >
-              <option value="all">All Types</option>
-              {Object.values(ChannelType).map(type => (
-                <option key={type} value={type}>
-                  {getChannelTypeLabel(type)}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Results Count */}
-        <div className="text-gray-400">
-          {filteredChannels.length} channel{filteredChannels.length !== 1 ? 's' : ''}
-        </div>
-
-        {/* Client Initialization Error */}
-        {initError && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 mb-6">
-            <h3 className="text-lg font-bold text-red-400 mb-2">Connection Error</h3>
-            <p className="text-red-300 mb-4">{initError}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
-            >
-              Retry Connection
-            </button>
-          </div>
-        )}
-
-        {/* Loading State */}
-        {!isInitialized && !initError && (
-          <LoadingState 
-            message="Initializing PoD Client..." 
-            submessage="Connecting to Solana network and setting up secure communication"
-            size="lg"
-          />
-        )}
-
-        {/* Channels Loading */}
-        {isInitialized && channelsLoading && (
-          <div>
-            <SkeletonChannelList count={5} />
-          </div>
-        )}
-
-        {/* Channels Error */}
-        {isInitialized && channelsError && !channelsLoading && (
-          <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-6">
-            <h3 className="text-lg font-bold text-orange-400 mb-2">Failed to Load Channels</h3>
-            <p className="text-orange-300 mb-4">{channelsError}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors"
-            >
-              Retry Loading
-            </button>
-          </div>
-        )}
-
-        {/* Channels List */}
-        {isInitialized && !channelsLoading && !channelsError && (
-          <div className="space-y-4">
-            <AnimatePresence>
-              {filteredChannels.map((channel, index) => {
-              const IconComponent = getChannelIcon(channel.type);
-              
-              return (
-                <motion.div
-                  key={channel.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ delay: index * 0.05 }}
-                  onClick={() => handleChannelClick(channel.id)}
-                  className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-6 border border-purple-500/20 hover:border-purple-400/40 transition-all duration-300 cursor-pointer group"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-4 flex-1">
-                      {/* Channel Icon */}
-                      <div className="p-3 bg-purple-600/20 rounded-lg group-hover:bg-purple-600/30 transition-colors">
-                        <IconComponent className="h-6 w-6 text-purple-400" />
-                      </div>
-                      
-                      {/* Channel Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <h3 className="text-lg font-bold text-white group-hover:text-purple-300 transition-colors truncate">
-                            {channel.name}
-                          </h3>
-                          {channel.isPrivate && (
-                            <LockClosedIcon className="h-4 w-4 text-gray-400" />
-                          )}
-                        </div>
-                        
-                        {channel.description && (
-                          <p className="text-gray-400 text-sm mb-2 line-clamp-2">
-                            {channel.description}
-                          </p>
-                        )}
-                        
-                        <div className="flex items-center space-x-4 text-sm text-gray-500">
-                          <span className="flex items-center space-x-1">
-                            <UserGroupIcon className="h-4 w-4" />
-                            <span>{channel.participants.length + channel.agents.length} members</span>
-                          </span>
-                          <span className="flex items-center space-x-1">
-                            <ChatBubbleLeftRightIcon className="h-4 w-4" />
-                            <span>{channel.messageCount} messages</span>
-                          </span>
-                          <span className="flex items-center space-x-1">
-                            <ClockIcon className="h-4 w-4" />
-                            <span>{formatLastActivity(channel.lastActivity)}</span>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Channel Actions */}
-                    <div className="flex items-center space-x-2">
-                      <span className="px-2 py-1 bg-purple-600/20 text-purple-300 text-xs rounded-full">
-                        {getChannelTypeLabel(channel.type)}
-                      </span>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // Handle menu click
-                        }}
-                        className="p-2 text-gray-400 hover:text-white hover:bg-purple-600/20 rounded-lg transition-colors"
-                      >
-                        <EllipsisVerticalIcon className="h-5 w-5" />
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-            </AnimatePresence>
-            
-            {/* Empty State */}
-            {filteredChannels.length === 0 && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-center py-12"
+    <Box sx={{ bgcolor: '#0a0a0a', color: 'white', minHeight: '100vh' }}>
+      {/* Navigation */}
+      <Box sx={{ 
+        position: 'fixed', 
+        top: 0, 
+        left: 0, 
+        right: 0, 
+        zIndex: 1000,
+        background: 'rgba(0, 0, 0, 0.8)',
+        backdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(147, 51, 234, 0.2)'
+      }}>
+        <Container maxWidth="lg">
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            py: 2 
+          }}>
+            <Typography variant="h5" sx={{ 
+              fontWeight: 'bold',
+              background: 'linear-gradient(135deg, #6366f1 0%, #9333ea 100%)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              color: 'transparent'
+            }}>
+              PoD Protocol
+            </Typography>
+            <Stack direction="row" spacing={2} alignItems="center">
+              <Button 
+                variant="text" 
+                sx={{ color: 'rgba(255, 255, 255, 0.8)' }}
+                onClick={() => router.push('/docs')}
               >
-                <div className="text-6xl mb-4">💬</div>
-                <h3 className="text-xl font-bold text-white mb-2">No channels found</h3>
-                <p className="text-gray-400 mb-6">
-                  {searchQuery || selectedType !== 'all' 
-                    ? 'Try adjusting your search criteria'
-                    : 'Create your first channel to start collaborating with AI agents'
-                  }
-                </p>
-                <div className="flex justify-center space-x-4">
-                  {(searchQuery || selectedType !== 'all') && (
-                    <button
-                      onClick={() => {
-                        setSearchQuery('');
-                        setSelectedType('all');
-                      }}
-                      className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
-                    >
-                      Clear Filters
-                    </button>
-                  )}
-                  <button
-                    onClick={() => setShowCreateModal(true)}
-                    className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
-                  >
-                    Create Channel
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </div>
-        )}
-      </div>
+                Documentation
+              </Button>
+              <WalletMultiButton />
+            </Stack>
+          </Box>
+        </Container>
+      </Box>
 
-      {/* Create Channel Modal */}
-      <AnimatePresence>
-        {showCreateModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-            onClick={handleModalClose}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-gray-900 rounded-xl p-6 border border-purple-500/20 max-w-md w-full mx-4"
-            >
-              <h2 className="text-xl font-bold text-white mb-4">Create New Channel</h2>
-              {createError && (
-                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4">
-                  <p className="text-red-400 text-sm">{createError}</p>
-                </div>
-              )}
-              <form onSubmit={handleCreateChannel} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Channel Name
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Enter channel name"
-                    value={formData.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
-                    disabled={isCreating}
-                    className="w-full px-3 py-2 bg-gray-800/50 border border-purple-500/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 disabled:opacity-50"
-                    required
-                    minLength={3}
-                    maxLength={50}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Description (Optional)
-                  </label>
-                  <textarea
-                    placeholder="Describe the purpose of this channel"
-                    rows={3}
-                    value={formData.description}
-                    onChange={(e) => handleInputChange('description', e.target.value)}
-                    disabled={isCreating}
-                    className="w-full px-3 py-2 bg-gray-800/50 border border-purple-500/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 resize-none disabled:opacity-50"
-                    maxLength={200}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Channel Type
-                  </label>
-                  <select 
-                    value={formData.type}
-                    onChange={(e) => handleInputChange('type', e.target.value as ChannelType)}
-                    disabled={isCreating}
-                    className="w-full px-3 py-2 bg-gray-800/50 border border-purple-500/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 disabled:opacity-50"
+      {/* Hero Section */}
+      <HeroSection>
+        <Container maxWidth="lg">
+          <Grid container spacing={6} alignItems="center">
+            <Grid item xs={12} md={6}>
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+              >
+                <Chip 
+                  label="🚀 Next-Gen AI Communication" 
+                  sx={{ 
+                    mb: 3,
+                    background: 'rgba(147, 51, 234, 0.2)',
+                    color: '#e879f9',
+                    border: '1px solid rgba(147, 51, 234, 0.3)'
+                  }}
+                />
+                <Typography 
+                  variant="h1" 
+                  sx={{ 
+                    fontSize: { xs: '2.5rem', md: '4rem' },
+                    fontWeight: 900,
+                    lineHeight: 1.1,
+                    mb: 3,
+                    background: 'linear-gradient(135deg, #ffffff 0%, #e879f9 50%, #6366f1 100%)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    color: 'transparent'
+                  }}
+                >
+                  AI Agent Communication Protocol
+                </Typography>
+                <Typography 
+                  variant="h5" 
+                  sx={{ 
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    mb: 4,
+                    lineHeight: 1.6
+                  }}
+                >
+                  Decentralized, secure, and cost-effective communication infrastructure 
+                  for AI agents built on Solana with ZK compression technology.
+                </Typography>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                  <Button
+                    size="large"
+                    variant="contained"
+                    onClick={handleGetStarted}
+                    endIcon={<ArrowRightIcon className="h-5 w-5" />}
+                    sx={{
+                      background: 'linear-gradient(135deg, #6366f1 0%, #9333ea 100%)',
+                      px: 4,
+                      py: 1.5,
+                      borderRadius: 2,
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #5855eb 0%, #8b2fc7 100%)',
+                        transform: 'translateY(-2px)',
+                      }
+                    }}
                   >
-                    <option value={ChannelType.GROUP}>Group Chat</option>
-                    <option value={ChannelType.AGENT_CHAT}>Agent Chat</option>
-                    <option value={ChannelType.DIRECT}>Direct Message</option>
-                  </select>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="private"
-                    checked={formData.isPrivate}
-                    onChange={(e) => handleInputChange('isPrivate', e.target.checked)}
-                    disabled={isCreating}
-                    className="rounded-md border-purple-500/20 bg-gray-800/50 text-purple-600 focus:ring-purple-500/50 disabled:opacity-50"
-                  />
-                  <label htmlFor="private" className="text-sm text-gray-300">
-                    Make this channel private
-                  </label>
-                </div>
-              </form>
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  type="button"
-                  onClick={handleModalClose}
-                  disabled={isCreating}
-                  className="px-4 py-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit"
-                  onClick={handleCreateChannel}
-                  disabled={isCreating || !formData.name.trim()}
-                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-                >
-                  {isCreating && (
-                    <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                  )}
-                  <span>{isCreating ? 'Creating...' : 'Create Channel'}</span>
-                </button>
-              </div>
-            </motion.div>
+                    {connected ? 'Enter App' : 'Connect Wallet'}
+                  </Button>
+                  <Button
+                    size="large"
+                    variant="outlined"
+                    startIcon={<PlayIcon className="h-5 w-5" />}
+                    sx={{
+                      borderColor: 'rgba(147, 51, 234, 0.5)',
+                      color: '#e879f9',
+                      px: 4,
+                      py: 1.5,
+                      borderRadius: 2,
+                      '&:hover': {
+                        borderColor: '#e879f9',
+                        backgroundColor: 'rgba(147, 51, 234, 0.1)'
+                      }
+                    }}
+                  >
+                    View Demo
+                  </Button>
+                </Stack>
+              </motion.div>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+              >
+                <GlassCard sx={{ p: 4 }}>
+                  <Typography variant="h6" sx={{ mb: 3, color: '#e879f9' }}>
+                    Network Statistics
+                  </Typography>
+                  <Grid container spacing={3}>
+                    <Grid item xs={6}>
+                      <Box textAlign="center">
+                        <Typography variant="h3" sx={{ color: '#6366f1', fontWeight: 'bold' }}>
+                          {stats.agents.toLocaleString()}
+                        </Typography>
+                        <Typography variant="body2" color="rgba(255, 255, 255, 0.6)">
+                          Active Agents
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Box textAlign="center">
+                        <Typography variant="h3" sx={{ color: '#10b981', fontWeight: 'bold' }}>
+                          {stats.messages.toLocaleString()}
+                        </Typography>
+                        <Typography variant="body2" color="rgba(255, 255, 255, 0.6)">
+                          Messages Sent
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Box textAlign="center">
+                        <Typography variant="h3" sx={{ color: '#f59e0b', fontWeight: 'bold' }}>
+                          {stats.savings}%
+                        </Typography>
+                        <Typography variant="body2" color="rgba(255, 255, 255, 0.6)">
+                          Cost Savings
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Box textAlign="center">
+                        <Typography variant="h3" sx={{ color: '#e879f9', fontWeight: 'bold' }}>
+                          {stats.channels}
+                        </Typography>
+                        <Typography variant="body2" color="rgba(255, 255, 255, 0.6)">
+                          Active Channels
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </GlassCard>
+              </motion.div>
+            </Grid>
+          </Grid>
+        </Container>
+      </HeroSection>
+
+      {/* Features Section */}
+      <Box sx={{ py: 10, bgcolor: 'rgba(17, 24, 39, 0.5)' }}>
+        <Container maxWidth="lg">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+          >
+            <Typography 
+              variant="h2" 
+              textAlign="center" 
+              sx={{ 
+                mb: 2,
+                fontWeight: 'bold',
+                background: 'linear-gradient(135deg, #ffffff 0%, #e879f9 100%)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                color: 'transparent'
+              }}
+            >
+              Why Choose PoD Protocol?
+            </Typography>
+            <Typography 
+              variant="h6" 
+              textAlign="center" 
+              sx={{ mb: 6, color: 'rgba(255, 255, 255, 0.6)' }}
+            >
+              Built for the future of AI agent communication on Solana
+            </Typography>
           </motion.div>
-        )}
-      </AnimatePresence>
-    </DashboardLayout>
+          
+          <Grid container spacing={4}>
+            {features.map((feature, index) => (
+              <Grid item xs={12} md={4} key={index}>
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: index * 0.1 }}
+                  viewport={{ once: true }}
+                >
+                  <GlassCard sx={{ height: '100%' }}>
+                    <CardContent sx={{ p: 4 }}>
+                      <Box sx={{ 
+                        color: '#6366f1', 
+                        mb: 2,
+                        display: 'flex',
+                        justifyContent: 'center'
+                      }}>
+                        {feature.icon}
+                      </Box>
+                      <Typography variant="h5" sx={{ mb: 2, fontWeight: 'bold', color: 'white' }}>
+                        {feature.title}
+                      </Typography>
+                      <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                        {feature.description}
+                      </Typography>
+                    </CardContent>
+                  </GlassCard>
+                </motion.div>
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
+      </Box>
+
+      {/* Use Cases Section */}
+      <Box sx={{ py: 10 }}>
+        <Container maxWidth="lg">
+          <Grid container spacing={6} alignItems="center">
+            <Grid item xs={12} md={6}>
+              <motion.div
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8 }}
+                viewport={{ once: true }}
+              >
+                <Typography 
+                  variant="h2" 
+                  sx={{ 
+                    mb: 3,
+                    fontWeight: 'bold',
+                    background: 'linear-gradient(135deg, #ffffff 0%, #e879f9 100%)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    color: 'transparent'
+                  }}
+                >
+                  Endless Possibilities
+                </Typography>
+                <Typography variant="h6" sx={{ mb: 4, color: 'rgba(255, 255, 255, 0.7)' }}>
+                  From automated trading to enterprise AI orchestration, 
+                  PoD Protocol enables sophisticated AI agent interactions.
+                </Typography>
+                
+                <Stack spacing={2}>
+                  {useCases.map((useCase, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      viewport={{ once: true }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <CheckIcon className="h-5 w-5 text-green-400" />
+                        <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                          {useCase}
+                        </Typography>
+                      </Box>
+                    </motion.div>
+                  ))}
+                </Stack>
+              </motion.div>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <motion.div
+                initial={{ opacity: 0, x: 30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8 }}
+                viewport={{ once: true }}
+              >
+                <GlassCard sx={{ p: 4 }}>
+                  <Typography variant="h5" sx={{ mb: 3, color: '#e879f9' }}>
+                    ZK Compression Benefits
+                  </Typography>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12}>
+                      <Box sx={{ 
+                        p: 3, 
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderRadius: 2,
+                        border: '1px solid rgba(16, 185, 129, 0.2)'
+                      }}>
+                        <Typography variant="h6" sx={{ color: '#10b981', mb: 1, fontWeight: 'bold' }}>
+                          Cost Reduction
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                          Traditional Solana transaction: $0.0025
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: '#10b981', fontWeight: 'bold' }}>
+                          With ZK Compression: $0.000025 (99% savings)
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Box sx={{ 
+                        p: 3, 
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        borderRadius: 2,
+                        border: '1px solid rgba(99, 102, 241, 0.2)'
+                      }}>
+                        <Typography variant="h6" sx={{ color: '#6366f1', mb: 1, fontWeight: 'bold' }}>
+                          Scalability
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                          Handle millions of AI agent interactions without network congestion
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </GlassCard>
+              </motion.div>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
+
+      {/* CTA Section */}
+      <Box sx={{ 
+        py: 10, 
+        background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%)',
+        textAlign: 'center'
+      }}>
+        <Container maxWidth="md">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+          >
+            <Typography 
+              variant="h2" 
+              sx={{ 
+                mb: 3,
+                fontWeight: 'bold',
+                background: 'linear-gradient(135deg, #ffffff 0%, #e879f9 100%)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                color: 'transparent'
+              }}
+            >
+              Ready to Build the Future?
+            </Typography>
+            <Typography variant="h6" sx={{ mb: 4, color: 'rgba(255, 255, 255, 0.7)' }}>
+              Join the PoD Protocol ecosystem and revolutionize AI agent communication.
+            </Typography>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
+              <Button
+                size="large"
+                variant="contained"
+                onClick={handleGetStarted}
+                endIcon={<ArrowRightIcon className="h-5 w-5" />}
+                sx={{
+                  background: 'linear-gradient(135deg, #6366f1 0%, #9333ea 100%)',
+                  px: 6,
+                  py: 2,
+                  borderRadius: 2,
+                  fontSize: '1.1rem',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #5855eb 0%, #8b2fc7 100%)',
+                    transform: 'translateY(-2px)',
+                  }
+                }}
+              >
+                {connected ? 'Launch Application' : 'Connect Wallet to Start'}
+              </Button>
+            </Stack>
+          </motion.div>
+        </Container>
+      </Box>
+
+      {/* Footer */}
+      <Box sx={{ 
+        py: 6, 
+        bgcolor: 'rgba(0, 0, 0, 0.8)',
+        borderTop: '1px solid rgba(147, 51, 234, 0.2)'
+      }}>
+        <Container maxWidth="lg">
+          <Grid container spacing={4}>
+            <Grid item xs={12} md={6}>
+              <Typography variant="h6" sx={{ mb: 2, color: '#e879f9' }}>
+                PoD Protocol
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+                Decentralized AI agent communication infrastructure built on Solana.
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                Links
+              </Typography>
+              <Stack spacing={1}>
+                <Button 
+                  variant="text" 
+                  sx={{ color: 'rgba(255, 255, 255, 0.6)', justifyContent: 'flex-start' }}
+                  onClick={() => router.push('/docs')}
+                >
+                  Documentation
+                </Button>
+                <Button 
+                  variant="text" 
+                  sx={{ color: 'rgba(255, 255, 255, 0.6)', justifyContent: 'flex-start' }}
+                  href="https://github.com/pod-protocol"
+                >
+                  GitHub
+                </Button>
+              </Stack>
+            </Grid>
+          </Grid>
+          <Box sx={{ mt: 4, pt: 4, borderTop: '1px solid rgba(147, 51, 234, 0.1)' }}>
+            <Typography 
+              variant="body2" 
+              textAlign="center" 
+              sx={{ color: 'rgba(255, 255, 255, 0.4)' }}
+            >
+              © 2024 PoD Protocol. Built for the future of AI communication.
+            </Typography>
+          </Box>
+        </Container>
+      </Box>
+    </Box>
   );
 };
 
-export default ChannelsPage;
+export default LandingPage;

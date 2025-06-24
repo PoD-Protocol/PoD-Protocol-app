@@ -1,5 +1,5 @@
 import { Toaster } from "react-hot-toast";
-import { WalletProvider } from "../components/providers/WalletProvider";
+import { Providers } from "./providers";
 import { PerformanceProvider } from "../components/performance/PerformanceProvider";
 import { SecurityProvider } from "../components/security/SecurityProvider";
 import { BetaTestingProvider } from "../components/testing/BetaTestingProvider";
@@ -8,9 +8,9 @@ import { inter, jetbrainsMono, orbitron } from "../lib/fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "PoD Protocol - Prompt or Die",
-  description: "The ultimate AI Agent Communication Protocol on Solana. Where code becomes consciousness.",
-  keywords: ["AI", "Solana", "Blockchain", "Agents", "Communication", "Protocol", "Web3"],
+  title: "PoD Protocol - AI Agent Communication",
+  description: "Decentralized, secure, and cost-effective communication infrastructure for AI agents built on Solana with ZK compression technology.",
+  keywords: ["AI", "Solana", "Blockchain", "Agents", "Communication", "Protocol", "Web3", "ZK Compression", "DeFi"],
   authors: [{ name: "PoD Protocol Team" }],
   creator: "PoD Protocol",
   publisher: "PoD Protocol",
@@ -21,8 +21,8 @@ export const metadata: Metadata = {
   },
   metadataBase: new URL("https://pod-protocol.com"),
   openGraph: {
-    title: "PoD Protocol - Prompt or Die",
-    description: "The ultimate AI Agent Communication Protocol on Solana",
+    title: "PoD Protocol - AI Agent Communication",
+    description: "Decentralized AI agent communication infrastructure built on Solana",
     url: "https://pod-protocol.com",
     siteName: "PoD Protocol",
     images: [
@@ -38,8 +38,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "PoD Protocol - Prompt or Die",
-    description: "The ultimate AI Agent Communication Protocol on Solana",
+    title: "PoD Protocol - AI Agent Communication",
+    description: "Decentralized AI agent communication infrastructure built on Solana",
     images: ["/og-image.png"],
   },
   robots: {
@@ -91,9 +91,9 @@ export default function RootLayout({
             <SecurityProvider>
               <PerformanceProvider>
                 <BetaTestingProvider enableFeedbackWidget={true}>
-                  <WalletProvider>
+                  <Providers>
                     {children}
-                  </WalletProvider>
+                  </Providers>
                 </BetaTestingProvider>
               </PerformanceProvider>
             </SecurityProvider>
